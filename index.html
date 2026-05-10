@@ -1,0 +1,1247 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🏖️ Chorvatsko Checklist</title>
+  <style>
+    :root {
+      --ocean: #0077b6;
+      --ocean-light: #00b4d8;
+      --ocean-dark: #023e8a;
+      --sand: #faf8f4;
+      --sand-dark: #f0ebe0;
+      --text: #1a2332;
+      --text-muted: #6b7a8d;
+      --border: #e2dbd0;
+      --shadow: rgba(0,119,182,0.10);
+      --green: #48bb78;
+      --green-bg: #f0fff4;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--sand);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── HEADER ── */
+    .header {
+      background: linear-gradient(135deg, #023e8a 0%, #0077b6 55%, #00b4d8 100%);
+      color: white;
+      padding: 18px 16px 22px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 3px 16px rgba(0,0,0,0.25);
+    }
+    .header-top { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+    .header-emoji { font-size: 2rem; line-height: 1; }
+    .header-titles h1 { font-size: 1.35rem; font-weight: 700; }
+    .header-titles p { font-size: 0.78rem; opacity: 0.8; margin-top: 2px; }
+    .progress-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; font-size: 0.82rem; opacity: 0.9; }
+    .progress-bar-wrap { background: rgba(255,255,255,0.22); border-radius: 10px; height: 9px; margin-bottom: 14px; overflow: hidden; }
+    .progress-bar-fill { height: 100%; background: #90e0c0; border-radius: 10px; transition: width 0.4s cubic-bezier(.4,0,.2,1); }
+    .search-wrap { position: relative; }
+    .search-input {
+      width: 100%;
+      padding: 10px 42px 10px 16px;
+      border: none;
+      border-radius: 26px;
+      font-size: 0.95rem;
+      background: rgba(255,255,255,0.95);
+      color: var(--text);
+      outline: none;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+    .search-input::placeholder { color: #8fa0b0; }
+    .search-clear {
+      position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+      background: none; border: none; cursor: pointer; font-size: 1rem;
+      color: var(--text-muted); display: none; padding: 4px;
+    }
+
+    /* ── FILTERS ── */
+    .filters {
+      display: flex; gap: 8px; padding: 10px 14px;
+      background: white; border-bottom: 1px solid var(--border);
+      overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none;
+    }
+    .filters::-webkit-scrollbar { display: none; }
+    .filter-btn {
+      padding: 6px 14px; border-radius: 20px; border: 1.5px solid var(--border);
+      background: white; color: var(--text-muted); font-size: 0.82rem;
+      cursor: pointer; white-space: nowrap; transition: all 0.18s; font-weight: 500;
+    }
+    .filter-btn:hover { border-color: var(--ocean); color: var(--ocean); }
+    .filter-btn.active { background: var(--ocean); color: white; border-color: var(--ocean); }
+
+    /* ── CONTENT ── */
+    .content { padding: 12px; max-width: 700px; margin: 0 auto; }
+
+    /* ── CATEGORY CARD ── */
+    .cat-card {
+      background: white; border-radius: 16px; margin-bottom: 12px;
+      box-shadow: 0 2px 10px var(--shadow); overflow: hidden;
+    }
+    .cat-header {
+      display: flex; align-items: center; padding: 14px 16px;
+      cursor: pointer; user-select: none; gap: 10px;
+      border-bottom: 1px solid transparent; transition: background 0.15s;
+    }
+    .cat-header:hover { background: var(--sand); }
+    .cat-header.open { border-bottom-color: var(--border); }
+    .cat-icon { font-size: 1.35rem; }
+    .cat-name { flex: 1; font-size: 1rem; font-weight: 600; }
+    .cat-stats { font-size: 0.8rem; color: var(--text-muted); text-align: right; }
+    .cat-stats-num { display: block; font-weight: 600; color: var(--text); }
+    .cat-chevron { font-size: 0.65rem; color: var(--text-muted); transition: transform 0.25s; margin-left: 4px; }
+    .cat-header.open .cat-chevron { transform: rotate(180deg); }
+    .cat-body { display: none; }
+    .cat-body.open { display: block; }
+
+    /* mini progress inside category */
+    .cat-mini-bar { height: 3px; background: var(--sand-dark); }
+    .cat-mini-fill { height: 100%; background: var(--green); transition: width 0.4s ease; }
+
+    /* ── SECTION ── */
+    .sec-name {
+      padding: 9px 16px 3px; font-size: 0.73rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted);
+    }
+
+    /* ── ITEM ── */
+    .item {
+      display: flex; align-items: center; padding: 10px 16px;
+      gap: 11px; border-bottom: 1px solid #f3ede4;
+      cursor: pointer; transition: background 0.15s; position: relative;
+    }
+    .item:last-child { border-bottom: none; }
+    .item:hover { background: #fdf9f4; }
+    .item.checked { background: var(--green-bg); }
+    .item.hidden { display: none; }
+
+    .item-check {
+      width: 22px; height: 22px; border: 2px solid #c8bfb4; border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; transition: all 0.2s; background: white;
+    }
+    .item.checked .item-check { background: var(--green); border-color: var(--green); }
+    .check-mark { display: none; color: white; font-size: 0.75rem; font-weight: 700; }
+    .item.checked .check-mark { display: block; }
+
+    .item-body { flex: 1; min-width: 0; }
+    .item-text { font-size: 0.92rem; line-height: 1.35; }
+    .item.checked .item-text { text-decoration: line-through; color: #9aab9c; }
+
+    .item-badges { display: flex; align-items: center; gap: 5px; margin-top: 4px; flex-wrap: wrap; }
+    .badge-source { font-size: 0.7rem; }
+    .badge-tag {
+      font-size: 0.68rem; padding: 2px 7px; border-radius: 10px;
+      font-weight: 600; white-space: nowrap;
+    }
+    .badge-note { font-size: 0.72rem; color: var(--text-muted); }
+
+    .item-edit-btn {
+      opacity: 0; font-size: 0.85rem; color: var(--text-muted); padding: 4px 6px;
+      transition: opacity 0.15s; flex-shrink: 0;
+    }
+    .item:hover .item-edit-btn { opacity: 1; }
+
+    /* ── SEARCH RESULTS ── */
+    .search-results { display: none; }
+    .search-results.active { display: block; }
+    .sr-card { background: white; border-radius: 12px; margin-bottom: 8px; box-shadow: 0 1px 5px var(--shadow); overflow: hidden; }
+    .sr-breadcrumb {
+      padding: 6px 14px; font-size: 0.72rem; color: var(--text-muted);
+      background: var(--sand); border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 4px;
+    }
+    .sr-crumb-sep { opacity: 0.5; }
+    .no-results { text-align: center; padding: 50px 20px; color: var(--text-muted); }
+    .no-results .big { font-size: 2.5rem; margin-bottom: 10px; }
+
+    /* ── MODAL ── */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.52); z-index: 200;
+      align-items: flex-end; justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: white; border-radius: 22px 22px 0 0; width: 100%;
+      max-width: 700px; max-height: 88vh; overflow-y: auto;
+      animation: slideUp 0.28s cubic-bezier(.32,.72,0,1);
+      padding-bottom: max(16px, env(safe-area-inset-bottom));
+    }
+    @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+    .modal-handle { width: 40px; height: 4px; background: var(--border); border-radius: 2px; margin: 12px auto 0; }
+    .modal-header { padding: 14px 20px 12px; border-bottom: 1px solid var(--border); }
+    .modal-breadcrumb { font-size: 0.73rem; color: var(--text-muted); margin-bottom: 6px; display: flex; align-items: center; gap: 4px; }
+    .modal-title-row { display: flex; align-items: flex-start; gap: 12px; }
+    .modal-item-name { flex: 1; font-size: 1.08rem; font-weight: 600; line-height: 1.3; }
+    .modal-toggle {
+      padding: 6px 14px; border-radius: 20px; border: 1.5px solid; font-size: 0.83rem;
+      cursor: pointer; font-weight: 600; transition: all 0.2s; white-space: nowrap; flex-shrink: 0;
+    }
+    .modal-toggle.is-checked { background: var(--green); border-color: var(--green); color: white; }
+    .modal-toggle.not-checked { background: white; border-color: var(--border); color: var(--text-muted); }
+
+    .modal-body { padding: 18px 20px 4px; }
+    .modal-sec-label {
+      font-size: 0.75rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.06em; color: var(--text-muted); margin-bottom: 10px;
+    }
+
+    .tags-section { margin-bottom: 22px; }
+    .tags-list { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 12px; min-height: 28px; }
+    .tag-chip {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; cursor: default;
+    }
+    .tag-chip .remove-tag { cursor: pointer; opacity: 0.65; font-size: 0.7rem; }
+    .tag-chip .remove-tag:hover { opacity: 1; }
+
+    .tag-add-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .tag-input {
+      flex: 1; min-width: 120px; padding: 8px 12px;
+      border: 1.5px solid var(--border); border-radius: 8px;
+      font-size: 0.9rem; outline: none; font-family: inherit;
+    }
+    .tag-input:focus { border-color: var(--ocean); }
+    .color-dots { display: flex; gap: 5px; }
+    .color-dot {
+      width: 20px; height: 20px; border-radius: 50%; cursor: pointer;
+      border: 2px solid transparent; transition: transform 0.15s;
+      flex-shrink: 0;
+    }
+    .color-dot.sel { border-color: #2d3748; transform: scale(1.2); }
+    .btn-add-tag {
+      padding: 8px 14px; background: var(--ocean); color: white;
+      border: none; border-radius: 8px; font-size: 0.9rem; cursor: pointer;
+      font-weight: 500; white-space: nowrap;
+    }
+    .suggested-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+    .sug-tag {
+      padding: 3px 10px; border-radius: 20px; font-size: 0.76rem; font-weight: 600;
+      cursor: pointer; border: 1.5px solid transparent; opacity: 0.75; transition: opacity 0.15s;
+    }
+    .sug-tag:hover { opacity: 1; }
+
+    .notes-section { margin-bottom: 8px; }
+    .note-textarea {
+      width: 100%; min-height: 80px; padding: 10px 13px;
+      border: 1.5px solid var(--border); border-radius: 10px;
+      font-size: 0.9rem; resize: vertical; font-family: inherit; outline: none; color: var(--text);
+    }
+    .note-textarea:focus { border-color: var(--ocean); }
+
+    .modal-footer {
+      padding: 12px 20px 18px; border-top: 1px solid var(--border);
+      display: flex; gap: 10px; margin-top: 14px;
+    }
+    .btn-cancel {
+      padding: 12px 20px; background: var(--sand-dark); color: var(--text);
+      border: none; border-radius: 12px; font-size: 0.95rem; cursor: pointer; font-weight: 500;
+    }
+    .btn-save {
+      flex: 1; padding: 12px; background: var(--ocean); color: white;
+      border: none; border-radius: 12px; font-size: 1rem; font-weight: 700;
+      cursor: pointer; transition: background 0.2s;
+    }
+    .btn-save:hover { background: var(--ocean-dark); }
+
+    /* ── RESET ── */
+    .reset-wrap { text-align: center; padding: 10px 0 24px; }
+    .btn-reset {
+      padding: 8px 22px; background: none; border: 1.5px solid #fc8181;
+      color: #e53e3e; border-radius: 20px; font-size: 0.84rem; cursor: pointer; font-weight: 500;
+    }
+    .btn-reset:hover { background: #fff5f5; }
+
+    /* ── TOAST ── */
+    .toast {
+      position: fixed; bottom: 24px; left: 50%;
+      transform: translateX(-50%) translateY(16px);
+      background: #2d3748; color: white; padding: 10px 22px;
+      border-radius: 26px; font-size: 0.88rem; opacity: 0;
+      transition: all 0.3s; z-index: 400; white-space: nowrap; pointer-events: none;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* ── DELETE BUTTON ── */
+    .btn-delete {
+      padding: 12px 14px; background: #fff5f5; color: #e53e3e;
+      border: 1.5px solid #feb2b2; border-radius: 12px; font-size: 1rem;
+      cursor: pointer; transition: all 0.2s; flex-shrink: 0;
+    }
+    .btn-delete:hover { background: #fed7d7; border-color: #fc8181; }
+
+    /* ── ADD ITEM MODAL ── */
+    .add-form-group { margin-bottom: 20px; }
+    .add-form-input {
+      width: 100%; padding: 11px 14px; border: 1.5px solid var(--border);
+      border-radius: 10px; font-size: 1rem; font-family: inherit;
+      outline: none; color: var(--text);
+    }
+    .add-form-input:focus { border-color: var(--ocean); }
+    .add-form-input.error { border-color: #fc8181; background: #fff5f5; }
+    .src-radios { display: flex; gap: 10px; }
+    .src-radio-label {
+      flex: 1; display: flex; align-items: center; justify-content: center;
+      gap: 8px; padding: 10px 14px; border: 1.5px solid var(--border);
+      border-radius: 10px; cursor: pointer; font-size: 0.9rem; font-weight: 500;
+      transition: all 0.18s; user-select: none;
+    }
+    .src-radio-label input { display: none; }
+    .src-radio-label.selected { border-color: var(--ocean); background: #eff8ff; color: var(--ocean); }
+    .cat-select {
+      width: 100%; padding: 11px 14px; border: 1.5px solid var(--border);
+      border-radius: 10px; font-size: 0.95rem; font-family: inherit;
+      outline: none; color: var(--text); background: white;
+      appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7a8d' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 14px center;
+    }
+    .cat-select:focus { border-color: var(--ocean); }
+
+    /* ── FAB ── */
+    .fab {
+      position: fixed; bottom: 24px; right: 20px;
+      width: 56px; height: 56px; border-radius: 50%;
+      background: var(--ocean); color: white; border: none;
+      font-size: 1.8rem; line-height: 1; cursor: pointer;
+      box-shadow: 0 4px 16px rgba(0,119,182,0.45);
+      display: flex; align-items: center; justify-content: center;
+      transition: transform 0.18s, box-shadow 0.18s; z-index: 150;
+    }
+    .fab:hover { transform: scale(1.08); box-shadow: 0 6px 22px rgba(0,119,182,0.55); }
+    .fab:active { transform: scale(0.95); }
+
+    @media (min-width: 700px) {
+      .content { padding: 16px; }
+      .modal { border-radius: 20px; margin: 20px; max-height: 80vh; }
+      .modal-overlay { align-items: center; }
+      .item-edit-btn { opacity: 0.4; }
+      .fab { bottom: 32px; right: 32px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-top">
+    <div class="header-emoji">🏖️</div>
+    <div class="header-titles">
+      <h1>Chorvatsko Checklist</h1>
+      <p>Rodinná dovolená 2026 · Zabalíme vše!</p>
+    </div>
+  </div>
+  <div class="progress-info">
+    <span id="progressText">Načítám…</span>
+    <span id="progressPct">0 %</span>
+  </div>
+  <div class="progress-bar-wrap">
+    <div class="progress-bar-fill" id="progressBar" style="width:0%"></div>
+  </div>
+  <div class="search-wrap">
+    <input type="text" class="search-input" id="searchInput" placeholder="🔍 Hledat věc, štítek nebo poznámku…" autocomplete="off" spellcheck="false">
+    <button class="search-clear" id="searchClear" title="Vymazat">✕</button>
+  </div>
+</div>
+
+<!-- FILTERS -->
+<div class="filters" id="filters">
+  <button class="filter-btn active" data-f="all">Vše</button>
+  <button class="filter-btn" data-f="unchecked">❌ Nezabaleno</button>
+  <button class="filter-btn" data-f="checked">✅ Zabaleno</button>
+  <button class="filter-btn" data-f="cz">🇨🇿 Z Česka</button>
+  <button class="filter-btn" data-f="buy">🛒 Koupit na místě</button>
+</div>
+
+<!-- MAIN -->
+<div class="content">
+  <div id="catsView"></div>
+  <div class="search-results" id="searchResults"></div>
+  <div class="reset-wrap">
+    <button class="btn-reset" id="btnReset">🔄 Resetovat celý checklist</button>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <div class="modal-breadcrumb" id="mBreadcrumb"></div>
+      <div class="modal-title-row">
+        <div class="modal-item-name" id="mItemName"></div>
+        <button class="modal-toggle not-checked" id="mToggle">☐ Zabalit</button>
+      </div>
+    </div>
+    <div class="modal-body">
+      <!-- Tags -->
+      <div class="tags-section">
+        <div class="modal-sec-label">🏷️ Štítky</div>
+        <div class="tags-list" id="mTagsList"></div>
+        <div class="tag-add-row">
+          <input type="text" class="tag-input" id="mTagInput" placeholder="Název štítku…" maxlength="30">
+          <div class="color-dots" id="mColorDots"></div>
+          <button class="btn-add-tag" id="mAddTagBtn">Přidat</button>
+        </div>
+        <div class="suggested-tags" id="mSuggestedTags"></div>
+      </div>
+      <!-- Note -->
+      <div class="notes-section">
+        <div class="modal-sec-label">📝 Poznámka</div>
+        <textarea class="note-textarea" id="mNote" placeholder="Přidej poznámku k této věci…"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" id="mCancel">Zrušit</button>
+      <button class="btn-delete" id="mDelete" title="Smazat položku">🗑️</button>
+      <button class="btn-save" id="mSave">💾 Uložit</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD ITEM MODAL -->
+<div class="modal-overlay" id="addModalOverlay">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <div class="modal-title-row">
+        <div class="modal-item-name">➕ Přidat novou položku</div>
+      </div>
+    </div>
+    <div class="modal-body">
+      <div class="add-form-group">
+        <div class="modal-sec-label">Název položky</div>
+        <input type="text" class="add-form-input" id="aName" placeholder="Např. plavecké brýle…" maxlength="80" autocomplete="off">
+      </div>
+      <div class="add-form-group">
+        <div class="modal-sec-label">Odkud</div>
+        <div class="src-radios">
+          <label class="src-radio-label selected" id="aSrcCzLabel">
+            <input type="radio" name="aSrc" value="cz" checked> 🇨🇿 Z Česka
+          </label>
+          <label class="src-radio-label" id="aSrcBuyLabel">
+            <input type="radio" name="aSrc" value="buy"> 🛒 Koupit na místě
+          </label>
+        </div>
+      </div>
+      <div class="add-form-group">
+        <div class="modal-sec-label">Kategorie</div>
+        <select class="cat-select" id="aCat"></select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" id="aCancelBtn">Zrušit</button>
+      <button class="btn-save" id="aSaveBtn">✅ Přidat položku</button>
+    </div>
+  </div>
+</div>
+
+<button class="fab" id="fabAdd" title="Přidat novou položku">+</button>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════════════════════════════
+const BASE_CATEGORIES = [
+  {
+    id: 'cat1', name: 'Věci pro miminko', icon: '🍼',
+    sections: [
+      { id: 's1', name: 'Oblečení', items: [
+        {id:'i001',text:'plavky',src:'cz'},{id:'i002',text:'pokrývka hlavy',src:'cz'},
+        {id:'i003',text:'ponožky',src:'cz'},{id:'i004',text:'tepláky',src:'cz'},
+        {id:'i005',text:'kalhoty',src:'cz'},{id:'i006',text:'trička',src:'cz'},
+        {id:'i007',text:'bodýčka',src:'cz'},{id:'i008',text:'svetřík',src:'cz'},
+        {id:'i009',text:'pyžamo',src:'cz'},{id:'i010',text:'overaly',src:'cz'},
+        {id:'i011',text:'mikina',src:'cz'},{id:'i012',text:'tenká bunda / větrovka',src:'cz'},
+      ]},
+      { id: 's2', name: 'Přebalování', items: [
+        {id:'i013',text:'plínky na cestu',src:'cz'},{id:'i014',text:'plínky na pobyt',src:'buy'},
+        {id:'i015',text:'Perlan',src:'cz'},{id:'i016',text:'vlhčené ubrousky',src:'cz'},
+        {id:'i017',text:'krém proti opruzeninám',src:'cz'},{id:'i018',text:'přebalovací podložky',src:'cz'},
+        {id:'i019',text:'dezinfekce na ruce',src:'cz'},
+      ]},
+      { id: 's3', name: 'Jídlo a krmení', items: [
+        {id:'i020',text:'lahvičky',src:'cz'},{id:'i021',text:'dudlíky',src:'cz'},
+        {id:'i022',text:'kojenecká výživa',src:'cz'},{id:'i023',text:'příkrmy',src:'cz'},
+        {id:'i024',text:'bryndáky',src:'cz'},{id:'i025',text:'sterilizační prostředky',src:'cz'},
+        {id:'i026',text:'cestovní ohřívač lahví',src:'cz'},{id:'i027',text:'3× kojenecká voda',src:'cz'},
+      ]},
+      { id: 's4', name: 'Hygiena', items: [
+        {id:'i028',text:'kartáček na vlasy',src:'cz'},{id:'i029',text:'nůžky na nehty',src:'cz'},
+        {id:'i030',text:'teploměr',src:'cz'},
+      ]},
+      { id: 's5', name: 'Zábava a pohodlí', items: [
+        {id:'i031',text:'oblíbené hračky',src:'cz'},{id:'i032',text:'knížky',src:'cz'},
+        {id:'i033',text:'deka na hraní',src:'cz'},
+      ]},
+      { id: 's6', name: 'Věci na pláž pro miminko', items: [
+        {id:'i034',text:'UV stan / UV kryt',src:'cz'},{id:'i035',text:'plavky',src:'cz'},
+        {id:'i036',text:'pokrývka hlavy',src:'cz'},{id:'i037',text:'sluneční brýle',src:'cz'},
+        {id:'i038',text:'opalovací krém',src:'cz'},{id:'i039',text:'lehká osuška',src:'cz'},
+        {id:'i040',text:'hračky do písku / vody',src:'cz'},{id:'i041',text:'skládací podložka',src:'cz'},
+      ]},
+      { id: 's7', name: 'Zdraví a bezpečnost', items: [
+        {id:'i042',text:'lékárnička',src:'cz'},{id:'i043',text:'léky na teplotu',src:'cz'},
+        {id:'i044',text:'náplasti',src:'cz'},{id:'i045',text:'dezinfekce',src:'cz'},
+        {id:'i046',text:'nosní odsávačka',src:'cz'},{id:'i047',text:'repelent pro miminko',src:'cz'},
+      ]},
+      { id: 's8', name: 'Cestovní vybavení', items: [
+        {id:'i048',text:'autosedačka',src:'cz'},{id:'i049',text:'nosítko',src:'cz'},
+      ]},
+    ]
+  },
+  {
+    id: 'cat2', name: 'Oblečení a obuv – dospělí', icon: '👗',
+    sections: [
+      { id: 's9', name: null, items: [
+        {id:'i050',text:'trička',src:'cz'},{id:'i051',text:'kraťasy',src:'cz'},
+        {id:'i052',text:'lehké kalhoty',src:'cz'},{id:'i053',text:'oblečení na doma',src:'cz'},
+        {id:'i054',text:'spodní prádlo',src:'cz'},{id:'i055',text:'ponožky',src:'cz'},
+        {id:'i056',text:'plavky',src:'cz'},{id:'i057',text:'něco teplejšího na večer',src:'cz'},
+        {id:'i058',text:'oblečení do restaurace',src:'cz'},{id:'i059',text:'sportovní oblečení',src:'cz'},
+        {id:'i060',text:'sandály',src:'cz'},{id:'i061',text:'tenisky',src:'cz'},
+        {id:'i062',text:'pantofle / žabky',src:'cz'},{id:'i063',text:'boty do vody',src:'cz'},
+        {id:'i064',text:'pokrývka hlavy',src:'cz'},
+      ]},
+    ]
+  },
+  {
+    id: 'cat3', name: 'Hygiena a osobní péče', icon: '🧴',
+    sections: [
+      { id: 's10', name: 'Každodenní hygiena', items: [
+        {id:'i065',text:'kartáčky na zuby',src:'cz'},{id:'i066',text:'pasta',src:'cz'},
+        {id:'i067',text:'deodorant',src:'cz'},{id:'i068',text:'parfém',src:'cz'},
+        {id:'i069',text:'hřeben / kartáč',src:'cz'},{id:'i070',text:'holení',src:'cz'},
+        {id:'i071',text:'kosmetika',src:'cz'},{id:'i072',text:'gumičky / sponky',src:'cz'},
+        {id:'i073',text:'kapesníky',src:'cz'},
+      ]},
+      { id: 's11', name: 'Sprcha a péče', items: [
+        {id:'i074',text:'sprchový gel',src:'cz'},{id:'i075',text:'šampon',src:'cz'},
+        {id:'i076',text:'kondicionér',src:'cz'},{id:'i077',text:'krém na obličej',src:'cz'},
+        {id:'i078',text:'tělové mléko',src:'cz'},{id:'i079',text:'opalovací krém',src:'cz'},
+        {id:'i080',text:'aftersun',src:'cz'},
+      ]},
+      { id: 's12', name: 'Léky a zdraví', items: [
+        {id:'i081',text:'pravidelně užívané léky',src:'cz'},{id:'i082',text:'ibalgin / paralen',src:'cz'},
+        {id:'i083',text:'něco na zažívání',src:'cz'},{id:'i084',text:'náplasti',src:'cz'},
+        {id:'i085',text:'dezinfekce',src:'cz'},{id:'i086',text:'repelent',src:'cz'},
+        {id:'i087',text:'vitamíny',src:'cz'},
+      ]},
+      { id: 's13', name: 'Cestovní a praktické věci', items: [
+        {id:'i088',text:'ručníky na pláž',src:'cz'},{id:'i089',text:'kosmetická taška',src:'cz'},
+        {id:'i090',text:'Jelínek na praní',src:'cz'},{id:'i091',text:'sáčky na mokré věci',src:'cz'},
+      ]},
+    ]
+  },
+  {
+    id: 'cat4', name: 'Dokumenty a elektronika', icon: '📄',
+    sections: [
+      { id: 's14', name: 'Doklady a finance', items: [
+        {id:'i092',text:'občanky / pasy',src:'cz'},{id:'i093',text:'kartičky pojištěnce',src:'cz'},
+        {id:'i094',text:'řidičský průkaz',src:'cz'},{id:'i095',text:'technický průkaz',src:'cz'},
+        {id:'i096',text:'zelená karta',src:'cz'},{id:'i097',text:'platební karty',src:'cz'},
+        {id:'i098',text:'hotovost v eurech',src:'cz'},{id:'i099',text:'potvrzení o ubytování',src:'cz'},
+        {id:'i100',text:'cestovní pojištění',src:'cz'},{id:'i101',text:'doklady pro miminko',src:'cz'},
+      ]},
+      { id: 's15', name: 'Elektronika', items: [
+        {id:'i102',text:'telefony',src:'cz'},{id:'i103',text:'nabíječky na telefony',src:'cz'},
+        {id:'i104',text:'2× powerbanka',src:'cz'},{id:'i105',text:'kabely',src:'cz'},
+        {id:'i106',text:'sluchátka',src:'cz'},{id:'i107',text:'chytré hodinky + nabíječka',src:'cz'},
+      ]},
+      { id: 's16', name: 'Práce', items: [
+        {id:'i108',text:'pracovní notebook',src:'cz'},{id:'i109',text:'myš',src:'cz'},
+        {id:'i110',text:'nabíječka k notebooku',src:'cz'},
+      ]},
+      { id: 's17', name: 'Pro miminko do auta / po ruce', items: [
+        {id:'i111',text:'hračky do auta',src:'cz'},{id:'i112',text:'dudlík',src:'cz'},
+        {id:'i113',text:'lahvička',src:'cz'},{id:'i114',text:'kojenecká voda',src:'cz'},
+        {id:'i115',text:'vlhčené ubrousky',src:'cz'},{id:'i116',text:'plínky na cestu',src:'cz'},
+        {id:'i117',text:'přebalovací podložka',src:'cz'},{id:'i118',text:'náhradní oblečení',src:'cz'},
+        {id:'i119',text:'bryndák',src:'cz'},{id:'i120',text:'příkrmy / kapsičky',src:'cz'},
+        {id:'i121',text:'dečka',src:'cz'},{id:'i122',text:'Perlan',src:'cz'},
+        {id:'i123',text:'sáčky na špinavé věci',src:'cz'},{id:'i124',text:'hračka na uklidnění / usínání',src:'cz'},
+      ]},
+    ]
+  },
+  {
+    id: 'cat5', name: 'Auto a cesta', icon: '🚗',
+    sections: [
+      { id: 's18', name: 'Povinné a praktické věci', items: [
+        {id:'i125',text:'dálniční známky',src:'cz'},{id:'i126',text:'hotovost na mýto',src:'cz'},
+        {id:'i127',text:'nabíječky do auta',src:'cz'},{id:'i128',text:'voda',src:'cz'},
+        {id:'i129',text:'snacky na cestu',src:'cz'},{id:'i130',text:'pytlíky na odpadky',src:'cz'},
+        {id:'i131',text:'vlhčené ubrousky do auta',src:'cz'},{id:'i132',text:'reflexní vesty',src:'cz'},
+        {id:'i133',text:'rezervní klíč od auta',src:'cz'},
+      ]},
+      { id: 's19', name: 'Komfort na cestu', items: [
+        {id:'i134',text:'polštářek',src:'cz'},
+      ]},
+    ]
+  },
+  {
+    id: 'cat6', name: 'Jídlo a apartmán', icon: '🍽️',
+    sections: [
+      { id: 's20', name: 'Na první den / začátek pobytu', items: [
+        {id:'i135',text:'voda',src:'cz'},{id:'i136',text:'základní jídlo po příjezdu',src:'cz'},
+        {id:'i137',text:'kapsle do myčky',src:'buy'},{id:'i138',text:'houbička na nádobí',src:'buy'},
+        {id:'i139',text:'utěrka',src:'buy'},{id:'i140',text:'kafe',src:'cz'},
+        {id:'i141',text:'sůl / koření',src:'cz'},
+      ]},
+      { id: 's21', name: 'Praktické věci koupit na místě', items: [
+        {id:'i142',text:'zip sáčky',src:'buy'},{id:'i143',text:'alobal',src:'buy'},
+        {id:'i144',text:'ubrousky',src:'buy'},{id:'i145',text:'kuchyňské role',src:'buy'},
+      ]},
+    ]
+  },
+  {
+    id: 'cat7', name: 'Organizace a balení', icon: '🧳',
+    sections: [
+      { id: 's22', name: null, items: [
+        {id:'i146',text:'taška na pláž',src:'cz'},{id:'i147',text:'pytel na špinavé prádlo',src:'cz'},
+        {id:'i148',text:'organizéry / kostky do kufru',src:'cz'},
+        {id:'i149',text:'cestovní dokumenty pohromadě',src:'cz'},
+        {id:'i150',text:'seznam před odjezdem',src:'cz'},{id:'i151',text:'seznam před návratem',src:'cz'},
+      ]},
+      { id: 's23', name: 'Balkon / večerní pohoda', items: [
+        {id:'i152',text:'deskovky / karetní hry',src:'cz'},
+        {id:'i153',text:'svíčka proti komárům',src:'cz'},
+      ]},
+    ]
+  },
+];
+
+// ═══════════════════════════════════════════════════════════════
+// STATIC MAPS (built once from BASE_CATEGORIES)
+// ═══════════════════════════════════════════════════════════════
+const BASE_ITEM_MAP = {};
+const CAT_MAP = {};
+const SEC_MAP = {};
+BASE_CATEGORIES.forEach(cat => {
+  CAT_MAP[cat.id] = cat;
+  cat.sections.forEach(sec => {
+    SEC_MAP[sec.id] = { ...sec, catId: cat.id };
+    sec.items.forEach(item => {
+      BASE_ITEM_MAP[item.id] = { ...item, catId: cat.id, secId: sec.id };
+    });
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════
+// TAG COLORS
+// ═══════════════════════════════════════════════════════════════
+const TAG_COLORS = [
+  { bg: '#fed7aa', color: '#7c2d12' },
+  { bg: '#fecaca', color: '#7f1d1d' },
+  { bg: '#bbf7d0', color: '#14532d' },
+  { bg: '#bfdbfe', color: '#1e3a5f' },
+  { bg: '#ddd6fe', color: '#3b0764' },
+  { bg: '#fde68a', color: '#713f12' },
+  { bg: '#99f6e4', color: '#134e4a' },
+  { bg: '#fce7f3', color: '#831843' },
+];
+
+const SUGGESTED_TAGS = [
+  { text: 'Urgentní!', ...TAG_COLORS[1] },
+  { text: 'Tatínek',   ...TAG_COLORS[3] },
+  { text: 'Maminka',   ...TAG_COLORS[7] },
+  { text: 'Miminko',   ...TAG_COLORS[5] },
+  { text: 'Na pláž',   ...TAG_COLORS[6] },
+  { text: 'Ověřit',    ...TAG_COLORS[4] },
+  { text: 'Koupit',    ...TAG_COLORS[0] },
+  { text: 'Důležité',  ...TAG_COLORS[2] },
+];
+
+// ═══════════════════════════════════════════════════════════════
+// STATE  (localStorage)
+// state[itemId]        = { checked, tags, note }
+// state.__collapsed    = { catId: bool }
+// state.__deleted      = [itemId, …]   – smazané základní položky
+// state.__custom       = [{id,text,src,catId}, …] – přidané položky
+// ═══════════════════════════════════════════════════════════════
+const LS_KEY = 'chorvatsko_2026';
+
+function loadState() {
+  try { return JSON.parse(localStorage.getItem(LS_KEY)) || {}; } catch { return {}; }
+}
+function saveState() { localStorage.setItem(LS_KEY, JSON.stringify(state)); }
+
+let state = loadState();
+
+function itemState(id) {
+  if (!state[id]) state[id] = { checked: false, tags: [], note: '' };
+  return state[id];
+}
+function collapsedCats() {
+  if (!state.__collapsed) state.__collapsed = {};
+  return state.__collapsed;
+}
+
+// ── Dynamic item helpers ──────────────────────────────────────
+function getDeletedSet() { return new Set(state.__deleted || []); }
+
+function getCustomItems() {
+  return (state.__custom || []).map(ci => ({
+    ...ci, secId: '__custom_' + ci.catId, _isCustom: true
+  }));
+}
+
+// Single lookup for any item (base or custom)
+function lookupItem(id) {
+  if (BASE_ITEM_MAP[id]) return BASE_ITEM_MAP[id];
+  const ci = (state.__custom || []).find(c => c.id === id);
+  return ci ? { ...ci, secId: '__custom_' + ci.catId, _isCustom: true } : null;
+}
+
+// All items currently visible (base minus deleted + custom)
+function getActiveItems() {
+  const deleted = getDeletedSet();
+  return [
+    ...Object.values(BASE_ITEM_MAP).filter(i => !deleted.has(i.id)),
+    ...getCustomItems(),
+  ];
+}
+
+// Sec name for breadcrumb (handles custom pseudo-section)
+function getSecName(item) {
+  if (item._isCustom) return 'Vlastní přidané';
+  return (SEC_MAP[item.secId] || {}).name || null;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// FILTER / SEARCH STATE
+// ═══════════════════════════════════════════════════════════════
+let activeFilter = 'all';
+let searchQuery  = '';
+
+// ═══════════════════════════════════════════════════════════════
+// PROGRESS
+// ═══════════════════════════════════════════════════════════════
+function updateProgress() {
+  const items   = getActiveItems();
+  const total   = items.length;
+  const checked = items.filter(i => itemState(i.id).checked).length;
+  const pct     = total ? Math.round((checked / total) * 100) : 0;
+  document.getElementById('progressText').textContent = `${checked} / ${total} zabaleno`;
+  document.getElementById('progressPct').textContent  = `${pct} %`;
+  document.getElementById('progressBar').style.width  = pct + '%';
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SOURCE BADGE
+// ═══════════════════════════════════════════════════════════════
+function srcBadge(src) {
+  return src === 'cz'
+    ? '<span class="badge-source" title="Vzít z Česka">🇨🇿</span>'
+    : '<span class="badge-source" title="Koupit na místě">🛒</span>';
+}
+
+// ═══════════════════════════════════════════════════════════════
+// FILTER / SEARCH MATCHING
+// ═══════════════════════════════════════════════════════════════
+function matchesFilter(item) {
+  const s = itemState(item.id);
+  if (activeFilter === 'checked')   return s.checked;
+  if (activeFilter === 'unchecked') return !s.checked;
+  if (activeFilter === 'cz')        return item.src === 'cz';
+  if (activeFilter === 'buy')       return item.src === 'buy';
+  return true;
+}
+
+function matchesSearch(item, q) {
+  if (!q) return true;
+  const s   = itemState(item.id);
+  const cat = CAT_MAP[item.catId];
+  const haystack = [
+    item.text, cat.name, getSecName(item) || '',
+    s.note || '',
+    ...(s.tags || []).map(t => t.text),
+  ].join(' ').toLowerCase();
+  return q.toLowerCase().split(' ').every(w => haystack.includes(w));
+}
+
+// ═══════════════════════════════════════════════════════════════
+// RENDER ITEM ROW
+// ═══════════════════════════════════════════════════════════════
+function renderItemHTML(item) {
+  const s    = itemState(item.id);
+  const cls  = s.checked ? 'item checked' : 'item';
+  const tags = (s.tags || []).map(t =>
+    `<span class="badge-tag" style="background:${t.bg};color:${t.color}">${escHtml(t.text)}</span>`
+  ).join('');
+  const note = s.note ? `<span class="badge-note" title="${escHtml(s.note)}">📝</span>` : '';
+  return `
+    <div class="${cls}" data-id="${item.id}">
+      <div class="item-check"><span class="check-mark">✓</span></div>
+      <div class="item-body">
+        <div class="item-text">${escHtml(item.text)}</div>
+        <div class="item-badges">${srcBadge(item.src)}${tags}${note}</div>
+      </div>
+      <span class="item-edit-btn" data-edit="${item.id}" title="Upravit / smazat">✏️</span>
+    </div>`;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// RENDER CATEGORIES VIEW
+// ═══════════════════════════════════════════════════════════════
+function renderCats() {
+  const container = document.getElementById('catsView');
+  const collapsed = collapsedCats();
+  const deleted   = getDeletedSet();
+
+  // Group custom items by catId
+  const customByCat = {};
+  getCustomItems().forEach(ci => {
+    (customByCat[ci.catId] = customByCat[ci.catId] || []).push(ci);
+  });
+
+  container.innerHTML = BASE_CATEGORIES.map(cat => {
+    const baseItems   = cat.sections.flatMap(s => s.items).filter(i => !deleted.has(i.id));
+    const catCustom   = customByCat[cat.id] || [];
+    const allCatItems = [...baseItems, ...catCustom];
+    const visible     = allCatItems.filter(i => matchesFilter(i));
+    if (!visible.length) return '';
+
+    const total   = visible.length;
+    const checked = visible.filter(i => itemState(i.id).checked).length;
+    const pct     = total ? Math.round((checked / total) * 100) : 0;
+    const isOpen  = !collapsed[cat.id];
+
+    const sectionsHTML = cat.sections.map(sec => {
+      const secItems = sec.items.filter(i => !deleted.has(i.id) && matchesFilter(i));
+      if (!secItems.length) return '';
+      const secNameHTML = sec.name ? `<div class="sec-name">${escHtml(sec.name)}</div>` : '';
+      return secNameHTML + secItems.map(renderItemHTML).join('');
+    }).join('');
+
+    const customVisible = catCustom.filter(i => matchesFilter(i));
+    const customHTML = customVisible.length
+      ? `<div class="sec-name">Vlastní přidané</div>` + customVisible.map(renderItemHTML).join('')
+      : '';
+
+    return `
+      <div class="cat-card" id="cc-${cat.id}">
+        <div class="cat-header ${isOpen ? 'open' : ''}" data-cat="${cat.id}">
+          <span class="cat-icon">${cat.icon}</span>
+          <span class="cat-name">${escHtml(cat.name)}</span>
+          <span class="cat-stats">
+            <span class="cat-stats-num">${checked}/${total}</span>
+            ${pct}%
+          </span>
+          <span class="cat-chevron">▼</span>
+        </div>
+        <div class="cat-mini-bar"><div class="cat-mini-fill" style="width:${pct}%"></div></div>
+        <div class="cat-body ${isOpen ? 'open' : ''}" id="cb-${cat.id}">
+          ${sectionsHTML}${customHTML}
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// RENDER SEARCH RESULTS
+// ═══════════════════════════════════════════════════════════════
+function renderSearch() {
+  const sr = document.getElementById('searchResults');
+  const cv = document.getElementById('catsView');
+  const q  = searchQuery.trim();
+
+  if (!q) {
+    sr.classList.remove('active');
+    cv.style.display = '';
+    renderCats();
+    return;
+  }
+
+  cv.style.display = 'none';
+  sr.classList.add('active');
+
+  const matches = getActiveItems().filter(i => matchesFilter(i) && matchesSearch(i, q));
+
+  if (!matches.length) {
+    sr.innerHTML = `<div class="no-results"><div class="big">🔍</div>Nic jsme nenašli pro „${escHtml(q)}"</div>`;
+    return;
+  }
+
+  sr.innerHTML = matches.map(item => {
+    const cat   = CAT_MAP[item.catId];
+    const sName = getSecName(item);
+    const crumb = sName
+      ? `${cat.icon} ${escHtml(cat.name)} <span class="sr-crumb-sep">›</span> ${escHtml(sName)}`
+      : `${cat.icon} ${escHtml(cat.name)}`;
+    return `<div class="sr-card"><div class="sr-breadcrumb">${crumb}</div>${renderItemHTML(item)}</div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// REFRESH
+// ═══════════════════════════════════════════════════════════════
+function refresh() {
+  if (searchQuery.trim()) renderSearch();
+  else renderCats();
+  updateProgress();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// REFRESH SINGLE ITEM
+// ═══════════════════════════════════════════════════════════════
+function refreshItem(id) {
+  const item = lookupItem(id);
+  if (!item) return;
+  document.querySelectorAll(`[data-id="${id}"]`).forEach(el => {
+    const tmp = document.createElement('div');
+    tmp.innerHTML = renderItemHTML(item);
+    el.replaceWith(tmp.firstElementChild);
+  });
+  updateCatStats(item.catId);
+  updateProgress();
+}
+
+function updateCatStats(catId) {
+  const cat    = CAT_MAP[catId];
+  const catEl  = document.getElementById(`cc-${catId}`);
+  if (!catEl) return;
+  const deleted  = getDeletedSet();
+  const baseItms = cat.sections.flatMap(s => s.items).filter(i => !deleted.has(i.id) && matchesFilter(i));
+  const custItms = getCustomItems().filter(i => i.catId === catId && matchesFilter(i));
+  const all      = [...baseItms, ...custItms];
+  const total    = all.length;
+  const checked  = all.filter(i => itemState(i.id).checked).length;
+  const pct      = total ? Math.round((checked / total) * 100) : 0;
+  const statsEl  = catEl.querySelector('.cat-stats');
+  if (statsEl) statsEl.innerHTML = `<span class="cat-stats-num">${checked}/${total}</span>${pct}%`;
+  const fillEl = catEl.querySelector('.cat-mini-fill');
+  if (fillEl) fillEl.style.width = pct + '%';
+}
+
+// ═══════════════════════════════════════════════════════════════
+// EDIT MODAL
+// ═══════════════════════════════════════════════════════════════
+let modalItemId   = null;
+let modalTags     = [];
+let selectedColor = 0;
+
+function openModal(id) {
+  modalItemId = id;
+  const item  = lookupItem(id);
+  if (!item) return;
+  const cat   = CAT_MAP[item.catId];
+  const sName = getSecName(item);
+  const s     = itemState(id);
+  modalTags   = JSON.parse(JSON.stringify(s.tags || []));
+
+  const bc = document.getElementById('mBreadcrumb');
+  bc.innerHTML = sName
+    ? `${cat.icon} ${escHtml(cat.name)} <span class="sr-crumb-sep">›</span> ${escHtml(sName)}`
+    : `${cat.icon} ${escHtml(cat.name)}`;
+
+  document.getElementById('mItemName').textContent = item.text;
+  setToggleState(document.getElementById('mToggle'), s.checked);
+  document.getElementById('mNote').value = s.note || '';
+  document.getElementById('mTagInput').value = '';
+  renderModalTags();
+  renderColorDots();
+  renderSuggestedTags();
+
+  document.getElementById('modalOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+  modalItemId = null;
+}
+
+function setToggleState(btn, checked) {
+  btn.className    = checked ? 'modal-toggle is-checked' : 'modal-toggle not-checked';
+  btn.textContent  = checked ? '✓ Zabaleno' : '☐ Zabalit';
+  btn.dataset.checked = checked ? '1' : '0';
+}
+
+function renderModalTags() {
+  document.getElementById('mTagsList').innerHTML = modalTags.map((t, idx) => `
+    <span class="tag-chip" style="background:${t.bg};color:${t.color}">
+      ${escHtml(t.text)}<span class="remove-tag" data-tidx="${idx}">✕</span>
+    </span>`).join('') || '<span style="color:#aaa;font-size:0.82rem">Zatím žádné štítky</span>';
+}
+
+function renderColorDots() {
+  document.getElementById('mColorDots').innerHTML = TAG_COLORS.map((c, i) =>
+    `<div class="color-dot ${i === selectedColor ? 'sel' : ''}" data-ci="${i}" style="background:${c.bg};border-color:${i === selectedColor ? '#2d3748' : c.bg}"></div>`
+  ).join('');
+}
+
+function renderSuggestedTags() {
+  const existing = new Set(modalTags.map(t => t.text));
+  document.getElementById('mSuggestedTags').innerHTML = SUGGESTED_TAGS
+    .filter(st => !existing.has(st.text))
+    .map(st => `<span class="sug-tag" data-sug="${escHtml(st.text)}" style="background:${st.bg};color:${st.color};border-color:${st.bg}">${escHtml(st.text)}</span>`)
+    .join('');
+}
+
+function addTagFromInput() {
+  const input = document.getElementById('mTagInput');
+  const text  = input.value.trim();
+  if (!text) return;
+  const col = TAG_COLORS[selectedColor];
+  if (!modalTags.find(t => t.text === text)) modalTags.push({ text, bg: col.bg, color: col.color });
+  input.value = '';
+  renderModalTags();
+  renderSuggestedTags();
+}
+
+function saveModal() {
+  if (!modalItemId) return;
+  const s     = itemState(modalItemId);
+  const tog   = document.getElementById('mToggle');
+  s.checked   = tog.dataset.checked === '1';
+  s.tags      = modalTags;
+  s.note      = document.getElementById('mNote').value.trim();
+  saveState();
+  refreshItem(modalItemId);
+  closeModal();
+  toast('Uloženo ✓');
+}
+
+// ─── Delete item ─────────────────────────────────────────────
+function deleteItem() {
+  if (!modalItemId) return;
+  const item = lookupItem(modalItemId);
+  const name = item ? item.text : 'tuto položku';
+  if (!confirm(`Smazat „${name}"? Tato akce je nevratná.`)) return;
+
+  if (BASE_ITEM_MAP[modalItemId]) {
+    // Base item → add to deleted list
+    if (!state.__deleted) state.__deleted = [];
+    if (!state.__deleted.includes(modalItemId)) state.__deleted.push(modalItemId);
+  } else {
+    // Custom item → remove from custom list
+    state.__custom = (state.__custom || []).filter(ci => ci.id !== modalItemId);
+  }
+  delete state[modalItemId]; // clean up its state
+  saveState();
+  closeModal();
+  refresh();
+  toast(`„${name}" smazáno`);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ADD ITEM MODAL
+// ═══════════════════════════════════════════════════════════════
+function openAddModal() {
+  // Populate category select
+  const sel = document.getElementById('aCat');
+  sel.innerHTML = BASE_CATEGORIES.map(cat =>
+    `<option value="${cat.id}">${cat.icon} ${escHtml(cat.name)}</option>`
+  ).join('');
+
+  document.getElementById('aName').value = '';
+  document.getElementById('aName').classList.remove('error');
+
+  // Reset source radio UI
+  document.querySelector('input[name="aSrc"][value="cz"]').checked = true;
+  document.getElementById('aSrcCzLabel').classList.add('selected');
+  document.getElementById('aSrcBuyLabel').classList.remove('selected');
+
+  document.getElementById('addModalOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  setTimeout(() => document.getElementById('aName').focus(), 120);
+}
+
+function closeAddModal() {
+  document.getElementById('addModalOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function saveAddModal() {
+  const nameEl = document.getElementById('aName');
+  const name   = nameEl.value.trim();
+  if (!name) { nameEl.classList.add('error'); nameEl.focus(); return; }
+  nameEl.classList.remove('error');
+
+  const src   = document.querySelector('input[name="aSrc"]:checked').value;
+  const catId = document.getElementById('aCat').value;
+  const id    = 'custom_' + Date.now();
+
+  if (!state.__custom) state.__custom = [];
+  state.__custom.push({ id, text: name, src, catId });
+
+  // Auto-open the category it was added to
+  const cc = collapsedCats();
+  cc[catId] = false;
+
+  saveState();
+  closeAddModal();
+  refresh();
+  toast(`„${name}" přidáno ✓`);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════════════════════════
+let toastTimer;
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2200);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// UTIL
+// ═══════════════════════════════════════════════════════════════
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// EVENT DELEGATION
+// ═══════════════════════════════════════════════════════════════
+function onContentClick(e) {
+  const editBtn = e.target.closest('[data-edit]');
+  if (editBtn) { e.stopPropagation(); openModal(editBtn.dataset.edit); return; }
+
+  const row = e.target.closest('.item[data-id]');
+  if (row) {
+    const id = row.dataset.id;
+    const s  = itemState(id);
+    s.checked = !s.checked;
+    saveState();
+    refreshItem(id);
+    updateProgress();
+    return;
+  }
+
+  const catHdr = e.target.closest('[data-cat]');
+  if (catHdr) {
+    const catId = catHdr.dataset.cat;
+    const cc    = collapsedCats();
+    cc[catId]   = !cc[catId];
+    saveState();
+    catHdr.classList.toggle('open');
+    const body = document.getElementById(`cb-${catId}`);
+    if (body) body.classList.toggle('open');
+    return;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════════
+function init() {
+  refresh();
+
+  document.getElementById('catsView').addEventListener('click', onContentClick);
+  document.getElementById('searchResults').addEventListener('click', onContentClick);
+
+  // Filters
+  document.getElementById('filters').addEventListener('click', e => {
+    const btn = e.target.closest('[data-f]');
+    if (!btn) return;
+    activeFilter = btn.dataset.f;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.toggle('active', b === btn));
+    refresh();
+  });
+
+  // Search
+  const si = document.getElementById('searchInput');
+  const sc = document.getElementById('searchClear');
+  si.addEventListener('input', () => {
+    searchQuery = si.value;
+    sc.style.display = searchQuery ? 'block' : 'none';
+    renderSearch();
+    updateProgress();
+  });
+  sc.addEventListener('click', () => {
+    si.value = ''; searchQuery = '';
+    sc.style.display = 'none';
+    renderSearch();
+    updateProgress();
+  });
+
+  // Reset
+  document.getElementById('btnReset').addEventListener('click', () => {
+    if (!confirm('Resetovat celý checklist? Odškrtnuté položky, štítky a poznámky budou smazány. Vlastní přidané položky a smazané položky zůstanou.')) return;
+    const keep = { __collapsed: state.__collapsed, __deleted: state.__deleted, __custom: state.__custom };
+    state = keep;
+    saveState();
+    refresh();
+    toast('Checklist resetován');
+  });
+
+  // Edit modal
+  document.getElementById('modalOverlay').addEventListener('click', e => {
+    if (e.target === document.getElementById('modalOverlay')) closeModal();
+  });
+  document.getElementById('mToggle').addEventListener('click', () => {
+    const tog = document.getElementById('mToggle');
+    setToggleState(tog, tog.dataset.checked !== '1');
+  });
+  document.getElementById('mCancel').addEventListener('click', closeModal);
+  document.getElementById('mSave').addEventListener('click', saveModal);
+  document.getElementById('mDelete').addEventListener('click', deleteItem);
+
+  document.getElementById('mTagsList').addEventListener('click', e => {
+    const rem = e.target.closest('[data-tidx]');
+    if (!rem) return;
+    modalTags.splice(parseInt(rem.dataset.tidx), 1);
+    renderModalTags(); renderSuggestedTags();
+  });
+  document.getElementById('mColorDots').addEventListener('click', e => {
+    const dot = e.target.closest('[data-ci]');
+    if (!dot) return;
+    selectedColor = parseInt(dot.dataset.ci);
+    renderColorDots();
+  });
+  document.getElementById('mAddTagBtn').addEventListener('click', addTagFromInput);
+  document.getElementById('mTagInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); addTagFromInput(); }
+  });
+  document.getElementById('mSuggestedTags').addEventListener('click', e => {
+    const sug = e.target.closest('[data-sug]');
+    if (!sug) return;
+    const preset = SUGGESTED_TAGS.find(t => t.text === sug.dataset.sug);
+    if (preset && !modalTags.find(t => t.text === preset.text)) {
+      modalTags.push({ text: preset.text, bg: preset.bg, color: preset.color });
+      renderModalTags(); renderSuggestedTags();
+    }
+  });
+
+  // Add item modal
+  document.getElementById('fabAdd').addEventListener('click', openAddModal);
+  document.getElementById('addModalOverlay').addEventListener('click', e => {
+    if (e.target === document.getElementById('addModalOverlay')) closeAddModal();
+  });
+  document.getElementById('aCancelBtn').addEventListener('click', closeAddModal);
+  document.getElementById('aSaveBtn').addEventListener('click', saveAddModal);
+  document.getElementById('aName').addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); saveAddModal(); }
+  });
+
+  // Source radio styling
+  document.querySelectorAll('input[name="aSrc"]').forEach(radio => {
+    radio.addEventListener('change', () => {
+      document.getElementById('aSrcCzLabel').classList.toggle('selected', radio.value !== 'buy' || !radio.checked);
+      document.getElementById('aSrcBuyLabel').classList.toggle('selected', radio.value === 'buy' && radio.checked);
+      // re-evaluate both
+      const val = document.querySelector('input[name="aSrc"]:checked').value;
+      document.getElementById('aSrcCzLabel').classList.toggle('selected', val === 'cz');
+      document.getElementById('aSrcBuyLabel').classList.toggle('selected', val === 'buy');
+    });
+  });
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
