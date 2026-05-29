@@ -326,8 +326,29 @@
       .fab { bottom: 32px; right: 32px; }
     }
   </style>
+  <!-- Firebase compat SDK – musí být před hlavním scriptem -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 </head>
 <body>
+
+<!-- Sync overlay: zobrazí se při načítání dat z Firebase -->
+<div id="syncOverlay" style="
+  position:fixed;inset:0;background:#023e8a;z-index:9999;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  color:white;font-family:-apple-system,sans-serif;gap:16px;">
+  <div style="font-size:3rem">🏖️</div>
+  <div style="font-size:1.1rem;font-weight:600">Načítám checklist…</div>
+  <div style="width:44px;height:44px;border:4px solid rgba(255,255,255,0.3);border-top-color:white;border-radius:50%;animation:spin 0.8s linear infinite"></div>
+  <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+</div>
+
+<!-- Sync badge: krátce zabliká při změně z jiného zařízení -->
+<div id="syncBadge" style="
+  position:fixed;top:12px;right:12px;z-index:9000;
+  background:#48bb78;color:white;padding:6px 12px;border-radius:20px;
+  font-size:0.8rem;font-weight:600;pointer-events:none;
+  transition:opacity 0.5s;opacity:0;">🔄 Synchronizováno</div>
 
 <!-- HEADER -->
 <div class="header">
@@ -661,20 +682,33 @@ const SUGGESTED_TAGS = [
 ];
 
 // ═══════════════════════════════════════════════════════════════
-// STATE  (localStorage)
+// STATE  (Firebase Realtime Database – sdíleno celou rodinou)
 // state[itemId]        = { checked, tags, note }
 // state.__collapsed    = { catId: bool }
 // state.__deleted      = [itemId, …]   – smazané základní položky
 // state.__custom       = [{id,text,src,catId}, …] – přidané položky
 // ═══════════════════════════════════════════════════════════════
-const LS_KEY = 'chorvatsko_2026';
+const firebaseConfig = {
+  apiKey: "AIzaSyDv0Qrxcx1Eop7_LQxf2oeauQVqyKsarrI",
+  authDomain: "chorvatsko-checklist.firebaseapp.com",
+  databaseURL: "https://chorvatsko-checklist-default-rtdb.firebaseio.com",
+  projectId: "chorvatsko-checklist",
+  storageBucket: "chorvatsko-checklist.firebasestorage.app",
+  messagingSenderId: "839028591653",
+  appId: "1:839028591653:web:c7fecd56b5024c5da383cc"
+};
+firebase.initializeApp(firebaseConfig);
+const _db = firebase.database();
+const _stateRef = _db.ref('chorvatsko2026');
 
-function loadState() {
-  try { return JSON.parse(localStorage.getItem(LS_KEY)) || {}; } catch { return {}; }
+let _saveTimer = null;
+let _appInitialized = false;
+function saveState() {
+  clearTimeout(_saveTimer);
+  _saveTimer = setTimeout(() => { _stateRef.set(state); }, 400);
 }
-function saveState() { localStorage.setItem(LS_KEY, JSON.stringify(state)); }
 
-let state = loadState();
+let state = {};
 
 function itemState(id) {
   if (!state[id]) state[id] = { checked: false, tags: [], note: '' };
@@ -1241,7 +1275,36 @@ function init() {
   });
 }
 
-document.addEventListener('DOMContentLoaded', init);
+// ── Firebase bootstrap ───────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  _stateRef.on('value', (snap) => {
+    const remote = snap.val() || {};
+    if (!_appInitialized) {
+      state = remote;
+      _appInitialized = true;
+      document.getElementById('syncOverlay').style.display = 'none';
+      init();
+    } else {
+      const remoteJson = JSON.stringify(remote);
+      const localJson  = JSON.stringify(state);
+      if (remoteJson !== localJson) {
+        state = remote;
+        refresh();
+        updateProgress();
+        showSyncBadge();
+      }
+    }
+  });
+});
+
+function showSyncBadge() {
+  const b = document.getElementById('syncBadge');
+  if (!b) return;
+  b.style.opacity = '1';
+  clearTimeout(b._t);
+  b._t = setTimeout(() => { b.style.opacity = '0'; }, 2000);
+}
 </script>
+
 </body>
 </html>
